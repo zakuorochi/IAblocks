@@ -1,1337 +1,481 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IA Blocks — Desarrollo de soluciones IA para todos</title>
-<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --lego-red: #E3000B;
-    --lego-blue: #006CB7;
-    --lego-yellow: #FFD700;
-    --lego-green: #00A650;
-    --holo-cyan: #00F5FF;
-    --holo-cyan-dim: rgba(0,245,255,0.15);
-    --dark-bg: #0A0E1A;
-    --dark-card: #0F1628;
-    --dark-border: rgba(0,245,255,0.2);
-    --text-primary: #E8EEF8;
-    --text-secondary: #8A9BB8;
-    --circuit-color: rgba(0,245,255,0.06);
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    background: var(--dark-bg);
-    color: var(--text-primary);
-    font-family: 'Exo 2', sans-serif;
-    overflow-x: hidden;
-  }
-
-  /* CIRCUIT BOARD BACKGROUND */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(var(--circuit-color) 1px, transparent 1px),
-      linear-gradient(90deg, var(--circuit-color) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  /* LEGO STUD pattern helper */
-  .stud-row {
-    display: flex;
-    gap: 0;
-  }
-
-  /* ===== NAVBAR ===== */
-  nav {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 5%;
-    height: 70px;
-    background: rgba(10,14,26,0.9);
-    backdrop-filter: blur(12px);
-    border-bottom: 2px solid var(--lego-blue);
-  }
-
-  .nav-logo {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    text-decoration: none;
-  }
-
-  .nav-logo-blocks {
-    display: flex;
-    gap: 3px;
-  }
-
-  .nav-block {
-    width: 14px;
-    height: 14px;
-    border-radius: 2px;
-    position: relative;
-    box-shadow: inset 0 -2px 0 rgba(0,0,0,0.3);
-  }
-  .nav-block::before {
-    content: '';
-    position: absolute;
-    top: -4px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 7px;
-    height: 4px;
-    border-radius: 2px 2px 0 0;
-    background: inherit;
-    filter: brightness(1.2);
-  }
-  .nb-r { background: var(--lego-red); }
-  .nb-b { background: var(--lego-blue); }
-  .nb-y { background: var(--lego-yellow); }
-  .nb-g { background: var(--lego-green); }
-
-  .nav-logo-text {
-    font-size: 1.3rem;
-    font-weight: 900;
-    letter-spacing: 1px;
-    color: var(--text-primary);
-  }
-  .nav-logo-text span {
-    color: var(--holo-cyan);
-    text-shadow: 0 0 10px var(--holo-cyan);
-  }
-
-  .nav-links {
-    display: flex;
-    gap: 32px;
-    list-style: none;
-  }
-  .nav-links a {
-    color: var(--text-secondary);
-    text-decoration: none;
-    font-size: 0.85rem;
-    font-weight: 600;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    transition: color 0.3s;
-    position: relative;
-  }
-  .nav-links a::after {
-    content: '';
-    position: absolute;
-    bottom: -4px; left: 0;
-    width: 0; height: 2px;
-    background: var(--holo-cyan);
-    transition: width 0.3s;
-  }
-  .nav-links a:hover { color: var(--holo-cyan); }
-  .nav-links a:hover::after { width: 100%; }
-
-  .nav-cta {
-    background: var(--lego-blue);
-    color: #fff !important;
-    padding: 8px 20px;
-    border-radius: 4px;
-    border-bottom: 3px solid #004a8a;
-    transition: transform 0.1s, border-bottom-width 0.1s !important;
-  }
-  .nav-cta::after { display: none !important; }
-  .nav-cta:hover { transform: translateY(-2px); border-bottom-width: 5px !important; }
-
-  /* ===== HERO ===== */
-  .hero {
-    position: relative;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    padding: 100px 5% 60px;
-    overflow: hidden;
-  }
-
-  /* Holographic glow blob */
-  .hero::after {
-    content: '';
-    position: absolute;
-    left: -200px; top: 50%;
-    transform: translateY(-50%);
-    width: 600px; height: 600px;
-    background: radial-gradient(circle, rgba(0,245,255,0.12) 0%, transparent 70%);
-    pointer-events: none;
-    animation: pulse-glow 4s ease-in-out infinite;
-  }
-
-  @keyframes pulse-glow {
-    0%, 100% { opacity: 1; transform: translateY(-50%) scale(1); }
-    50% { opacity: 0.6; transform: translateY(-50%) scale(1.1); }
-  }
-
-  .hero-content {
-    position: relative;
-    z-index: 2;
-    max-width: 620px;
-  }
-
-  .hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--holo-cyan-dim);
-    border: 1px solid var(--dark-border);
-    border-radius: 20px;
-    padding: 6px 16px;
-    font-size: 0.75rem;
-    font-family: 'Space Mono', monospace;
-    color: var(--holo-cyan);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-bottom: 28px;
-    animation: fadeInDown 0.8s ease forwards;
-  }
-
-  .hero-badge-dot {
-    width: 6px; height: 6px;
-    background: var(--holo-cyan);
-    border-radius: 50%;
-    animation: blink 1.5s ease infinite;
-    box-shadow: 0 0 6px var(--holo-cyan);
-  }
-
-  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
-
-  .hero h1 {
-    font-size: clamp(2.8rem, 6vw, 4.8rem);
-    font-weight: 900;
-    line-height: 1.05;
-    margin-bottom: 8px;
-    animation: fadeInUp 0.8s ease 0.1s both;
-  }
-
-  .hero h1 .ia-text {
-    color: var(--holo-cyan);
-    text-shadow: 0 0 20px rgba(0,245,255,0.5), 0 0 60px rgba(0,245,255,0.2);
-  }
-
-  .hero h1 .blocks-text {
-    display: block;
-    background: linear-gradient(90deg, var(--lego-red), var(--lego-blue), var(--lego-yellow), var(--lego-green));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .hero-sub {
-    font-size: 1.3rem;
-    font-weight: 300;
-    color: var(--text-secondary);
-    margin-bottom: 24px;
-    animation: fadeInUp 0.8s ease 0.2s both;
-  }
-
-  .hero-sub strong { color: var(--holo-cyan); font-weight: 600; }
-
-  .hero-desc {
-    font-size: 1rem;
-    line-height: 1.8;
-    color: var(--text-secondary);
-    margin-bottom: 40px;
-    max-width: 520px;
-    animation: fadeInUp 0.8s ease 0.3s both;
-  }
-
-  .hero-actions {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-    animation: fadeInUp 0.8s ease 0.4s both;
-  }
-
-  .btn-primary {
-    background: var(--lego-blue);
-    color: #fff;
-    padding: 14px 32px;
-    border-radius: 4px;
-    text-decoration: none;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    border-bottom: 4px solid #004a8a;
-    transition: transform 0.15s, border-bottom-width 0.15s;
-    display: inline-block;
-  }
-  .btn-primary:hover { transform: translateY(-3px); border-bottom-width: 6px; }
-
-  .btn-secondary {
-    background: transparent;
-    color: var(--holo-cyan);
-    padding: 14px 32px;
-    border-radius: 4px;
-    text-decoration: none;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    border: 2px solid var(--holo-cyan);
-    transition: background 0.3s, box-shadow 0.3s;
-    display: inline-block;
-  }
-  .btn-secondary:hover {
-    background: var(--holo-cyan-dim);
-    box-shadow: 0 0 20px rgba(0,245,255,0.3);
-  }
-
-  /* HERO LEGO TETRIS CANVAS */
-  .hero-visual {
-    position: absolute;
-    right: 5%;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 1;
-  }
-
-  #legoCanvas {
-    display: block;
-    filter: drop-shadow(0 0 40px rgba(0,245,255,0.12));
-  }
-
-  @keyframes fadeInDown {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* ===== LEGO DIVIDER ===== */
-  .lego-divider {
-    height: 16px;
-    display: flex;
-    width: 100%;
-    overflow: hidden;
-  }
-  .ld-r { flex: 1; background: var(--lego-red); }
-  .ld-b { flex: 1; background: var(--lego-blue); }
-  .ld-y { flex: 1; background: var(--lego-yellow); }
-  .ld-g { flex: 1; background: var(--lego-green); }
-
-  /* ===== SECTION BASE ===== */
-  section {
-    position: relative;
-    z-index: 1;
-    padding: 90px 5%;
-  }
-
-  .section-label {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.7rem;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--holo-cyan);
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .section-label::before {
-    content: '';
-    display: inline-block;
-    width: 30px; height: 2px;
-    background: var(--holo-cyan);
-  }
-
-  .section-title {
-    font-size: clamp(2rem, 4vw, 3rem);
-    font-weight: 900;
-    line-height: 1.1;
-    margin-bottom: 20px;
-  }
-
-  .section-desc {
-    font-size: 1.05rem;
-    line-height: 1.8;
-    color: var(--text-secondary);
-    max-width: 600px;
-  }
-
-  /* ===== PROJECTS ===== */
-  #proyectos { background: linear-gradient(180deg, var(--dark-bg) 0%, #080c18 100%); }
-
-  .projects-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-    gap: 28px;
-    margin-top: 50px;
-  }
-
-  .project-card {
-    background: var(--dark-card);
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid var(--dark-border);
-    transition: transform 0.3s, box-shadow 0.3s;
-    position: relative;
-  }
-  .project-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 60px rgba(0,245,255,0.1);
-  }
-
-  .card-top-bar {
-    height: 6px;
-    display: flex;
-  }
-  .card-top-bar span { flex: 1; }
-
-  .card-body { padding: 28px; }
-
-  .card-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: 'Space Mono', monospace;
-    font-size: 0.65rem;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    padding: 4px 12px;
-    border-radius: 20px;
-    margin-bottom: 16px;
-  }
-  .status-beta {
-    background: rgba(255,215,0,0.1);
-    color: var(--lego-yellow);
-    border: 1px solid rgba(255,215,0,0.3);
-  }
-  .status-soon {
-    background: rgba(0,166,80,0.1);
-    color: var(--lego-green);
-    border: 1px solid rgba(0,166,80,0.3);
-  }
-  .status-dot {
-    width: 5px; height: 5px;
-    border-radius: 50%;
-    background: currentColor;
-    animation: blink 1.5s ease infinite;
-  }
-
-  .card-title {
-    font-size: 1.8rem;
-    font-weight: 900;
-    letter-spacing: -0.5px;
-    margin-bottom: 6px;
-  }
-
-  .card-subtitle {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    margin-bottom: 20px;
-    font-style: italic;
-  }
-
-  .card-dates {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 24px;
-  }
-
-  .date-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 0.82rem;
-    color: var(--text-secondary);
-  }
-
-  .date-icon {
-    width: 22px; height: 22px;
-    border-radius: 3px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    flex-shrink: 0;
-  }
-
-  .card-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    font-weight: 700;
-    font-size: 0.9rem;
-    padding: 10px 20px;
-    border-radius: 4px;
-    transition: all 0.2s;
-    border-bottom: 3px solid transparent;
-  }
-
-  .card-link:hover { transform: translateY(-2px); }
-
-  .link-blue { background: var(--lego-blue); color: #fff; border-bottom-color: #004a8a; }
-  .link-green { background: var(--lego-green); color: #fff; border-bottom-color: #007a3c; }
-
-  /* LEGO brick decoration on cards */
-  .card-lego-deco {
-    position: absolute;
-    right: 20px;
-    bottom: 20px;
-    display: grid;
-    grid-template-columns: repeat(3, 16px);
-    gap: 2px;
-    opacity: 0.3;
-    transform: rotate(10deg);
-  }
-  .deco-stud {
-    width: 16px; height: 16px;
-    border-radius: 50%;
-    border: 2px solid currentColor;
-  }
-
-  /* ===== MISSION & VISION ===== */
-  #mision { background: var(--dark-bg); }
-
-  .mv-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 28px;
-    margin-top: 50px;
-  }
-
-  .mv-card {
-    padding: 40px;
-    border-radius: 8px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .mv-mission {
-    background: linear-gradient(135deg, rgba(0,107,183,0.15) 0%, rgba(0,107,183,0.05) 100%);
-    border: 1px solid rgba(0,107,183,0.4);
-  }
-
-  .mv-vision {
-    background: linear-gradient(135deg, rgba(0,245,255,0.08) 0%, rgba(0,245,255,0.02) 100%);
-    border: 1px solid var(--dark-border);
-  }
-
-  .mv-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 4px;
-  }
-  .mv-mission::before { background: linear-gradient(90deg, var(--lego-blue), var(--lego-red)); }
-  .mv-vision::before { background: linear-gradient(90deg, var(--holo-cyan), var(--lego-green)); }
-
-  .mv-icon {
-    width: 48px; height: 48px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    margin-bottom: 20px;
-  }
-
-  .mv-mission .mv-icon { background: rgba(0,107,183,0.3); }
-  .mv-vision .mv-icon { background: rgba(0,245,255,0.1); }
-
-  .mv-card h3 {
-    font-size: 1.4rem;
-    font-weight: 900;
-    margin-bottom: 14px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-
-  .mv-mission h3 { color: #4db8ff; }
-  .mv-vision h3 { color: var(--holo-cyan); }
-
-  .mv-card p {
-    font-size: 0.97rem;
-    line-height: 1.8;
-    color: var(--text-secondary);
-  }
-
-  /* ===== CONTACT ===== */
-  #contacto {
-    background: linear-gradient(180deg, var(--dark-bg) 0%, #060912 100%);
-  }
-
-  .contact-box {
-    max-width: 700px;
-    margin: 50px auto 0;
-    background: var(--dark-card);
-    border: 1px solid var(--dark-border);
-    border-radius: 8px;
-    padding: 50px;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .contact-box::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; height: 4px;
-    background: linear-gradient(90deg, var(--lego-red), var(--lego-blue), var(--lego-yellow), var(--lego-green));
-  }
-
-  .contact-glow {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 300px; height: 300px;
-    background: radial-gradient(circle, rgba(0,245,255,0.05) 0%, transparent 70%);
-    pointer-events: none;
-  }
-
-  .contact-box h3 {
-    font-size: 1.8rem;
-    font-weight: 900;
-    margin-bottom: 12px;
-  }
-
-  .contact-box p {
-    color: var(--text-secondary);
-    margin-bottom: 36px;
-    line-height: 1.7;
-    position: relative;
-  }
-
-  .contact-methods {
-    display: flex;
-    gap: 16px;
-    justify-content: center;
-    flex-wrap: wrap;
-    position: relative;
-  }
-
-  .contact-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 28px;
-    border-radius: 4px;
-    text-decoration: none;
-    font-weight: 700;
-    font-size: 0.9rem;
-    transition: all 0.2s;
-    border-bottom: 3px solid transparent;
-  }
-
-  .wa-btn {
-    background: var(--lego-green);
-    color: #fff;
-    border-bottom-color: #007a3c;
-  }
-  .wa-btn:hover { transform: translateY(-3px); }
-
-  .mail-btn {
-    background: var(--lego-blue);
-    color: #fff;
-    border-bottom-color: #004a8a;
-  }
-  .mail-btn:hover { transform: translateY(-3px); }
-
-  /* ===== FOOTER ===== */
-  footer {
-    background: #060912;
-    padding: 40px 5% 24px;
-    border-top: 1px solid rgba(255,255,255,0.05);
-    position: relative;
-    z-index: 1;
-  }
-
-  .footer-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 28px;
-    flex-wrap: wrap;
-    gap: 20px;
-  }
-
-  .footer-links {
-    display: flex;
-    gap: 28px;
-    list-style: none;
-  }
-  .footer-links a {
-    color: var(--text-secondary);
-    text-decoration: none;
-    font-size: 0.85rem;
-    transition: color 0.2s;
-  }
-  .footer-links a:hover { color: var(--holo-cyan); }
-
-  .footer-bottom {
-    border-top: 1px solid rgba(255,255,255,0.05);
-    padding-top: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  .footer-bottom p {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    font-family: 'Space Mono', monospace;
-  }
-  .footer-holo {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.7rem;
-    color: var(--holo-cyan);
-    opacity: 0.6;
-  }
-
-  /* LEGO footer blocks */
-  .footer-bricks {
-    display: flex;
-    gap: 3px;
-    align-items: center;
-  }
-  .fb {
-    width: 18px; height: 12px;
-    border-radius: 2px;
-    box-shadow: inset 0 -2px 0 rgba(0,0,0,0.3);
-  }
-
-  /* ===== SCROLL ANIMATIONS ===== */
-  .reveal {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 0.7s ease, transform 0.7s ease;
-  }
-  .reveal.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  /* ===== RESPONSIVE ===== */
-  @media (max-width: 900px) {
-    .hero-visual { display: none; }
-    .mv-grid { grid-template-columns: 1fr; }
-    .nav-links { display: none; }
-  }
-  @media (max-width: 600px) {
-    .hero h1 { font-size: 2.4rem; }
-    .projects-grid { grid-template-columns: 1fr; }
-    .contact-box { padding: 30px 20px; }
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IA Blocks — Inteligencia Aplicada para Todos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #07090f;
+            --bg-card: rgba(20, 25, 40, 0.6);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #8b5cf6;
+            --accent-cyan: #06b6d4;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Efectos de fondo estilo IA */
+        .bg-glow {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+            top: -200px;
+            left: -200px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        .bg-glow-right {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+            bottom: 20%;
+            right: -150px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Navbar */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(7, 9, 15, 0.8);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: var(--text-main);
+            text-decoration: none;
+        }
+
+        .logo span {
+            background: linear-gradient(to right, var(--accent-primary), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-main);
+        }
+
+        .btn-nav {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            padding: 8px 20px;
+            border-radius: 6px;
+            color: white !important;
+        }
+
+        /* Secciones Genéricas */
+        section {
+            padding: 100px 5%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-tag {
+            color: var(--accent-cyan);
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        /* Hero */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 150px;
+        }
+
+        .hero h1 {
+            font-size: clamp(3rem, 6vw, 4.5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 20px;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin-bottom: 40px;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            padding: 15px 35px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Grid Cards (Proyectos & Nosotros) */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s, border-color 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--text-main);
+        }
+
+        .card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--accent-cyan);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .card-link {
+            color: var(--accent-primary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .card-link:hover { text-decoration: underline; }
+
+        /* Legal & Cumplimiento (Importante para Flow) */
+        .legal-container {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 40px;
+            margin-top: 20px;
+        }
+
+        .legal-container h4 {
+            font-size: 1.2rem;
+            color: var(--accent-cyan);
+            margin-bottom: 15px;
+            margin-top: 30px;
+        }
+        .legal-container h4:first-child { margin-top: 0; }
+
+        .legal-container p, .legal-container li {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        .legal-container ul {
+            margin-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        .btn-reclamaciones {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: transparent;
+            border: 1px solid var(--text-muted);
+            color: var(--text-main);
+            padding: 15px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 20px;
+            width: fit-content;
+            transition: 0.3s;
+        }
+        .btn-reclamaciones:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: var(--text-main);
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border-color);
+            padding: 60px 5% 30px;
+            background: rgba(0,0,0,0.3);
+            margin-top: 80px;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-col h5 {
+            font-size: 1rem;
+            margin-bottom: 20px;
+            color: var(--text-main);
+        }
+
+        .footer-col a {
+            display: block;
+            color: var(--text-muted);
+            text-decoration: none;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+        .footer-col a:hover { color: var(--accent-cyan); }
+
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 0 auto;
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links { display: none; } /* En móvil se ocultaría o se haría un menú hamburguesa */
+            .hero h1 { font-size: 2.5rem; }
+            section { padding: 80px 5%; }
+            .footer-bottom { flex-direction: column; gap: 10px; text-align: center; }
+        }
+    </style>
 </head>
 <body>
 
-<!-- NAV -->
-<nav>
-  <a href="#inicio" class="nav-logo">
-    <div class="nav-logo-blocks">
-      <div class="nav-block nb-r"><div class="stud"></div></div>
-      <div class="nav-block nb-b"><div class="stud"></div></div>
-      <div class="nav-block nb-y"><div class="stud"></div></div>
-      <div class="nav-block nb-g"><div class="stud"></div></div>
-    </div>
-    <span class="nav-logo-text"><span>IA</span> Blocks</span>
-  </a>
-  <ul class="nav-links">
-    <li><a href="#inicio">Inicio</a></li>
-    <li><a href="#proyectos">Proyectos</a></li>
-    <li><a href="#mision">Nosotros</a></li>
-    <li><a href="#contacto" class="nav-cta">Contáctanos</a></li>
-  </ul>
-</nav>
+    <div class="bg-glow"></div>
+    <div class="bg-glow-right"></div>
 
-<!-- HERO -->
-<section id="inicio" class="hero">
-  <div class="hero-content">
-    <div class="hero-badge">
-      <div class="hero-badge-dot"></div>
-      Soluciones IA en desarrollo activo
-    </div>
-    <h1>
-      <span class="ia-text">IA</span>
-      <span class="blocks-text">Blocks</span>
-    </h1>
-    <p class="hero-sub">Desarrollo de soluciones <strong>IA para todos</strong></p>
-    <p class="hero-desc">
-      La IA no debería ser un concepto lejano ni intimidante. Somos el puente entre las herramientas más potentes de la IA y tus necesidades de cada día. Convertimos tecnología de vanguardia en funciones sencillas, accesibles y poderosas.
-    </p>
-    <div class="hero-actions">
-      <a href="#proyectos" class="btn-primary">Ver nuestros proyectos →</a>
-      <a href="#contacto" class="btn-secondary">Contáctanos</a>
-    </div>
-  </div>
+    <!-- Navegación -->
+    <nav>
+        <a href="#inicio" class="logo"><span>IA</span> BLOCKS</a>
+        <ul class="nav-links">
+            <li><a href="#proyectos">Proyectos</a></li>
+            <li><a href="#nosotros">Nosotros</a></li>
+            <li><a href="#legal">Legal</a></li>
+            <li><a href="#contacto" class="btn-nav">Contacto</a></li>
+        </ul>
+    </nav>
 
-  <!-- LEGO TETRIS CANVAS -->
-  <div class="hero-visual">
-    <canvas id="legoCanvas" width="360" height="340"></canvas>
-  </div>
-</section>
+    <!-- Hero Section -->
+    <section id="inicio" class="hero">
+        <span class="section-tag">Soluciones IA en desarrollo activo</span>
+        <h1>Desarrollo de soluciones<br><span style="color: var(--accent-cyan);">IA para todos</span></h1>
+        <p>La IA no debería ser un concepto lejano ni intimidante. Somos el puente entre las herramientas más potentes de la Inteligencia Artificial y tus necesidades de cada día. Convertimos tecnología de vanguardia en funciones sencillas, accesibles y poderosas.</p>
+        <a href="#proyectos" class="btn-primary">Descubre nuestros proyectos</a>
+    </section>
 
-<!-- LEGO DIVIDER -->
-<div class="lego-divider">
-  <div class="ld-r"></div><div class="ld-b"></div><div class="ld-y"></div><div class="ld-g"></div>
-  <div class="ld-b"></div><div class="ld-r"></div><div class="ld-g"></div><div class="ld-y"></div>
-  <div class="ld-r"></div><div class="ld-b"></div><div class="ld-y"></div><div class="ld-g"></div>
-  <div class="ld-b"></div><div class="ld-r"></div><div class="ld-g"></div><div class="ld-y"></div>
-</div>
+    <!-- Proyectos Section -->
+    <section id="proyectos">
+        <span class="section-tag">Portafolio</span>
+        <h2 class="section-title">Soluciones que estamos construyendo</h2>
+        <p style="color: var(--text-muted); max-width: 600px;">Cada proyecto es un bloque más en la misión de democratizar la IA para la vida cotidiana.</p>
+        
+        <div class="grid-2">
+            <div class="card">
+                <span class="badge">Beta Activa</span>
+                <h3>AURAM</h3>
+                <p style="font-style: italic; color: var(--accent-cyan); font-size: 0.85rem; margin-top: -10px;">Asesor de compras retail con IA</p>
+                <p>Tu asesor de compras inteligente. AURAM analiza tus preferencias y te guía hacia las mejores decisiones de compra en retail con el poder de la IA. Lanzamiento proyectado: Julio 2026.</p>
+                <a href="https://www.auram.site" target="_blank" class="card-link">Visitar plataforma AURAM &rarr;</a>
+            </div>
 
-<!-- PROJECTS -->
-<section id="proyectos">
-  <div class="reveal">
-    <div class="section-label">Nuestros proyectos</div>
-    <h2 class="section-title">Soluciones que estamos<br>construyendo</h2>
-    <p class="section-desc">Cada proyecto es un bloque más en la misión de democratizar la IA para la vida cotidiana.</p>
-  </div>
-
-  <div class="projects-grid">
-
-    <!-- AURAM -->
-    <div class="project-card reveal" style="transition-delay:0.1s">
-      <div class="card-top-bar">
-        <span style="background:var(--lego-red)"></span>
-        <span style="background:var(--lego-blue)"></span>
-        <span style="background:var(--lego-yellow)"></span>
-      </div>
-      <div class="card-body">
-        <div class="card-status status-beta">
-          <div class="status-dot"></div>
-          Beta activa
+            <div class="card">
+                <span class="badge" style="background: rgba(139, 92, 246, 0.1); color: var(--accent-secondary);">Próximamente</span>
+                <h3>TUKU.IA</h3>
+                <p style="font-style: italic; color: var(--accent-secondary); font-size: 0.85rem; margin-top: -10px;">Asistente educativo con IA</p>
+                <p>Tu compañero de aprendizaje inteligente. TUKU.IA personaliza la educación adaptándose a tu ritmo, estilo y objetivos de aprendizaje únicos. Inicio Beta: Agosto 2026.</p>
+                <a href="#contacto" class="card-link">Recibir novedades &rarr;</a>
+            </div>
         </div>
-        <div class="card-title">AURAM</div>
-        <div class="card-subtitle">Asesor de compras retail con IA</div>
-        <div class="card-dates">
-          <div class="date-item">
-            <div class="date-icon" style="background:rgba(255,215,0,0.2); color:var(--lego-yellow);">⚡</div>
-            <span><strong style="color:var(--text-primary);">Inicio Beta:</strong> 04 de Mayo, 2026</span>
-          </div>
-          <div class="date-item">
-            <div class="date-icon" style="background:rgba(0,107,183,0.2); color:#4db8ff;">🚀</div>
-            <span><strong style="color:var(--text-primary);">Lanzamiento:</strong> 01 de Julio, 2026</span>
-          </div>
+    </section>
+
+    <!-- Nosotros Section -->
+    <section id="nosotros">
+        <span class="section-tag">Nuestra Esencia</span>
+        <h2 class="section-title">Por qué hacemos lo que hacemos</h2>
+        
+        <div class="grid-2">
+            <div class="card">
+                <h3>Nuestra Misión</h3>
+                <p>Desmitificar y democratizar la Inteligencia Artificial Aplicada, convirtiendo tecnologías de vanguardia en soluciones intuitivas, accesibles y poderosas que resuelvan la fricción cotidiana. No vendemos algoritmos complejos; entregamos un día a día más simple, eficiente y humano, elevando la calidad de vida y devolviendo el tiempo para lo que realmente importa.</p>
+            </div>
+
+            <div class="card">
+                <h3>Nuestra Visión</h3>
+                <p>Aspiramos a ser el puente definitivo que conecte el poder exponencial de la Inteligencia Artificial con la vida real de las personas y empresas, fomentando la eficiencia operativa y garantizando innovación de alto valor.</p>
+            </div>
         </div>
-        <p style="font-size:0.9rem;color:var(--text-secondary);line-height:1.7;margin-bottom:24px;">Tu asesor de compras inteligente. AURAM analiza tus preferencias y te guía hacia las mejores decisiones de compra en retail con el poder de la IA.</p>
-        <a href="http://www.auram.site" target="_blank" class="card-link link-blue">
-          Visitar AURAM
-          <span>↗</span>
+    </section>
+
+    <!-- Legal & Compliance (Clave para FLOW) -->
+    <section id="legal">
+        <span class="section-tag">Transparencia y Confianza</span>
+        <h2 class="section-title">Información Legal</h2>
+        <p style="color: var(--text-muted); margin-bottom: 30px;">En IA Blocks y nuestra plataforma AURAM, operamos con total transparencia en cumplimiento con las normativas de comercio electrónico.</p>
+
+        <div class="legal-container">
+            <h4>1. Términos y Condiciones Generales</h4>
+            <p>El uso de los servicios proporcionados por IA Blocks y sus plataformas (incluyendo AURAM) implica la aceptación de nuestros términos de servicio. Nos reservamos el derecho de modificar o suspender el acceso a la plataforma en caso de detectar un uso indebido de los recursos de Inteligencia Artificial.</p>
+
+            <h4>2. Política de Reembolsos y Devoluciones</h4>
+            <p>En cumplimiento con las normativas comerciales y de procesamiento de pagos (Flow), IA Blocks establece las siguientes directrices para la devolución de fondos y créditos:</p>
+            <ul>
+                <li><strong>Plazo de solicitud:</strong> Los usuarios podrán solicitar la devolución de pagos por paquetes de créditos no utilizados dentro de los primeros 7 (siete) días calendario posteriores a la transacción, siempre y cuando ningún crédito haya sido consumido en los servicios de IA.</li>
+                <li><strong>Exclusiones:</strong> No proceden reembolsos parciales o totales una vez que los créditos digitales hayan sido utilizados en la plataforma (procesamiento de imágenes o generación de pruebas virtuales).</li>
+                <li><strong>Canal de atención:</strong> Toda solicitud de reembolso deberá ser canalizada formalmente a través del correo electrónico <strong>informes@auram.site</strong> o nuestro soporte técnico, adjuntando el comprobante de pago. Los reembolsos aprobados se procesarán mediante el medio de pago original en un plazo estimado de hasta 15 días hábiles.</li>
+            </ul>
+
+            <h4>3. Políticas de Privacidad</h4>
+            <p>IA Blocks protege tu privacidad. Las imágenes subidas a nuestras plataformas no se almacenan permanentemente en nuestros servidores ni se utilizan para entrenar modelos públicos sin consentimiento explícito.</p>
+        </div>
+
+        <a href="#contacto" class="btn-reclamaciones">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>
+            Libro de Reclamaciones Virtual
         </a>
-      </div>
-      <div class="card-lego-deco" style="color:var(--lego-blue)">
-        <div class="deco-stud"></div><div class="deco-stud"></div><div class="deco-stud"></div>
-        <div class="deco-stud"></div><div class="deco-stud"></div><div class="deco-stud"></div>
-      </div>
-    </div>
+    </section>
 
-    <!-- TUKU.IA -->
-    <div class="project-card reveal" style="transition-delay:0.2s">
-      <div class="card-top-bar">
-        <span style="background:var(--lego-green)"></span>
-        <span style="background:var(--lego-yellow)"></span>
-        <span style="background:var(--lego-blue)"></span>
-      </div>
-      <div class="card-body">
-        <div class="card-status status-soon">
-          <div class="status-dot"></div>
-          Próximamente
+    <!-- Contacto Section -->
+    <section id="contacto">
+        <span class="section-tag">Hablemos</span>
+        <h2 class="section-title">Contáctanos</h2>
+        <div class="card" style="text-align: center; max-width: 800px; margin: 0 auto;">
+            <h3 style="margin-bottom: 20px;">Reserva una cita con nosotros</h3>
+            <p style="margin-bottom: 30px;">Para reservar una cita, contáctanos directamente vía WhatsApp o envíanos un correo. Estaremos encantados de escucharte e integrar nuestras soluciones en tu negocio.</p>
+            
+            <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+                <a href="https://wa.me/message/JBVJCO6GBE3BO1" target="_blank" class="btn-primary" style="background: #10b981; display: flex; align-items: center; gap: 10px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    WhatsApp
+                </a>
+                <a href="mailto:ab.iablocks@gmail.com" class="btn-primary" style="background: rgba(255,255,255,0.1); border: 1px solid var(--border-color); display: flex; align-items: center; gap: 10px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                    ab.iablocks@gmail.com
+                </a>
+            </div>
         </div>
-        <div class="card-title">TUKU.IA</div>
-        <div class="card-subtitle">Asistente educativo con IA</div>
-        <div class="card-dates">
-          <div class="date-item">
-            <div class="date-icon" style="background:rgba(0,166,80,0.2); color:var(--lego-green);">⚡</div>
-            <span><strong style="color:var(--text-primary);">Inicio Beta:</strong> 01 de Agosto, 2026</span>
-          </div>
-          <div class="date-item">
-            <div class="date-icon" style="background:rgba(0,245,255,0.1); color:var(--holo-cyan);">🚀</div>
-            <span><strong style="color:var(--text-primary);">Lanzamiento:</strong> 01 de Noviembre, 2026</span>
-          </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-col">
+                <a href="#inicio" class="logo" style="margin-bottom: 15px; display: block;"><span>IA</span> BLOCKS</a>
+                <p style="color: var(--text-muted); font-size: 0.85rem;">Transformando negocios mediante Inteligencia Aplicada.</p>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 10px;"><strong>RUC:</strong> (Registrado en Perú)</p>
+            </div>
+            <div class="footer-col">
+                <h5>Proyectos</h5>
+                <a href="#proyectos">AURAM Virtual Try-on</a>
+                <a href="#proyectos">TUKU.IA (Próximamente)</a>
+            </div>
+            <div class="footer-col">
+                <h5>Legal y Soporte</h5>
+                <a href="#legal">Términos y Condiciones</a>
+                <a href="#legal">Política de Reembolsos</a>
+                <a href="#legal">Libro de Reclamaciones</a>
+                <a href="#contacto">Soporte Técnico</a>
+            </div>
         </div>
-        <p style="font-size:0.9rem;color:var(--text-secondary);line-height:1.7;margin-bottom:24px;">Tu compañero de aprendizaje inteligente. TUKU.IA personaliza la educación adaptándose a tu ritmo, estilo y objetivos de aprendizaje únicos.</p>
-        <a href="#contacto" class="card-link link-green">
-          Recibir novedades
-          <span>→</span>
-        </a>
-      </div>
-      <div class="card-lego-deco" style="color:var(--lego-green)">
-        <div class="deco-stud"></div><div class="deco-stud"></div><div class="deco-stud"></div>
-        <div class="deco-stud"></div><div class="deco-stud"></div><div class="deco-stud"></div>
-      </div>
-    </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 IA Blocks. Todos los derechos reservados.</p>
+            <p>San Borja, Lima, Perú</p>
+        </div>
+    </footer>
 
-  </div>
-</section>
-
-<!-- LEGO DIVIDER -->
-<div class="lego-divider">
-  <div class="ld-g"></div><div class="ld-y"></div><div class="ld-b"></div><div class="ld-r"></div>
-  <div class="ld-y"></div><div class="ld-g"></div><div class="ld-r"></div><div class="ld-b"></div>
-  <div class="ld-g"></div><div class="ld-y"></div><div class="ld-b"></div><div class="ld-r"></div>
-  <div class="ld-y"></div><div class="ld-g"></div><div class="ld-r"></div><div class="ld-b"></div>
-</div>
-
-<!-- MISSION & VISION -->
-<section id="mision">
-  <div class="reveal">
-    <div class="section-label">Nuestra esencia</div>
-    <h2 class="section-title">Por qué hacemos<br>lo que hacemos</h2>
-  </div>
-
-  <div class="mv-grid">
-    <div class="mv-card mv-mission reveal" style="transition-delay:0.1s">
-      <div class="mv-icon">🎯</div>
-      <h3>Nuestra Misión</h3>
-      <p>Desmitificar y democratizar la Inteligencia Artificial Aplicada, convirtiendo tecnologías de vanguardia en soluciones intuitivas, accesibles y poderosas que resuelvan la fricción cotidiana. No vendemos algoritmos complejos; entregamos un día a día más simple, eficiente y humano, elevando la calidad de vida y devolviendo el tiempo para lo que realmente importa.</p>
-    </div>
-    <div class="mv-card mv-vision reveal" style="transition-delay:0.2s">
-      <div class="mv-icon">🔭</div>
-      <h3>Nuestra Visión</h3>
-      <p>Aspiramos a ser el puente global definitivo que conecte el poder exponencial de la Inteligencia Artificial con la vida real de las personas. Un futuro donde la "Inteligencia Aplicada" de IA Blocks sea el estándar invisible e indispensable para simplificar la existencia humana, fomentando el bienestar y garantizando que los beneficios de la innovación sean equitativos y útiles para todos.</p>
-    </div>
-  </div>
-</section>
-
-<!-- LEGO DIVIDER -->
-<div class="lego-divider">
-  <div class="ld-b"></div><div class="ld-g"></div><div class="ld-r"></div><div class="ld-y"></div>
-  <div class="ld-r"></div><div class="ld-b"></div><div class="ld-y"></div><div class="ld-g"></div>
-  <div class="ld-b"></div><div class="ld-g"></div><div class="ld-r"></div><div class="ld-y"></div>
-  <div class="ld-r"></div><div class="ld-b"></div><div class="ld-y"></div><div class="ld-g"></div>
-</div>
-
-<!-- CONTACT -->
-<section id="contacto">
-  <div class="reveal" style="text-align:center;">
-    <div class="section-label" style="justify-content:center;">
-      <span></span>Contáctanos
-    </div>
-    <h2 class="section-title">Hablemos</h2>
-    <p class="section-desc" style="margin:0 auto;">¿Tienes una idea? ¿Quieres reservar una consultoría? ¿O simplemente saber más sobre nuestros proyectos? Estamos aquí.</p>
-  </div>
-
-  <div class="contact-box reveal">
-    <div class="contact-glow"></div>
-    <h3>Reserva una cita con nosotros</h3>
-    <p>Para reservar una cita, contáctanos directamente vía WhatsApp o envíanos un correo. Estaremos encantados de escucharte.</p>
-    <div class="contact-methods">
-      <a href="https://wa.me/message/JBVJCO6GBE3BO1" target="_blank" class="contact-btn wa-btn">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-        WhatsApp: 946 552 287
-      </a>
-      <a href="mailto:ab.iablocks@gmail.com" class="contact-btn mail-btn">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-        ab.iablocks@gmail.com
-      </a>
-    </div>
-  </div>
-</section>
-
-<!-- FOOTER -->
-<footer>
-  <div class="footer-top">
-    <div style="display:flex;align-items:center;gap:12px;">
-      <div class="footer-bricks">
-        <div class="fb" style="background:var(--lego-red)"></div>
-        <div class="fb" style="background:var(--lego-blue)"></div>
-        <div class="fb" style="background:var(--lego-yellow)"></div>
-        <div class="fb" style="background:var(--lego-green)"></div>
-      </div>
-      <span style="font-weight:900;font-size:1.1rem;"><span style="color:var(--holo-cyan);text-shadow:0 0 10px var(--holo-cyan)">IA</span> Blocks</span>
-    </div>
-    <ul class="footer-links">
-      <li><a href="#inicio">Inicio</a></li>
-      <li><a href="#proyectos">Proyectos</a></li>
-      <li><a href="#mision">Nosotros</a></li>
-      <li><a href="#contacto">Contacto</a></li>
-    </ul>
-  </div>
-  <div class="footer-bottom">
-    <p>© 2026 IA Blocks — Todos los derechos reservados</p>
-    <div class="footer-holo">// Inteligencia Aplicada para Todos</div>
-  </div>
-</footer>
-
-<script>
-  // ===== LEGO TETRIS ANIMATION =====
-  const canvas = document.getElementById('legoCanvas');
-  const ctx = canvas.getContext('2d');
-
-  const COLS = 6;       // grid columns
-  const ROWS = 7;       // grid rows
-  const BW = 56;        // brick width in px
-  const BH = 44;        // brick height in px
-  const GAP = 2;
-  const STUD_R = 7;     // stud radius
-  const CANVAS_W = COLS * (BW + GAP) - GAP;
-  const CANVAS_H = ROWS * (BH + GAP) - GAP;
-
-  canvas.width = CANVAS_W;
-  canvas.height = CANVAS_H;
-
-  const REAL_COLORS = [
-    { fill: '#E3000B', shadow: '#8a0007', highlight: '#ff4444' }, // red
-    { fill: '#006CB7', shadow: '#004070', highlight: '#3399ff' }, // blue
-    { fill: '#FFD700', shadow: '#b09600', highlight: '#ffe966' }, // yellow
-    { fill: '#00A650', shadow: '#006030', highlight: '#33d677' }, // green
-  ];
-
-  const HOLO = { fill: 'rgba(0,245,255,0.05)', stroke: '#00F5FF', glow: 'rgba(0,245,255,0.7)' };
-
-  // Each brick piece: { col, width (in units), type: 'real'|'holo', colorIdx, row (placed) }
-  // We'll do 1-wide bricks only for simplicity, alternating 1 and 2 wide
-  // The "wall" is COLS columns × ROWS rows of individual unit cells
-  // A brick spans 1 or 2 columns
-
-  // State machine
-  // PHASES: 'dropping' → pieces fall one by one → when wall full → 'fadeout' → reset
-  
-  // Wall grid: null or brick object
-  let wall = [];      // wall[row][col] = { type, colorIdx } or null
-  let fallingBricks = []; // currently falling pieces
-  let phase = 'dropping';
-  let wallOpacity = 1;
-  let nextDropTimer = 0;
-  let lastTime = 0;
-
-  // Pre-planned layout: array of rows, each row is array of {width, type, colorIdx}
-  // We randomise each cycle
-  function buildLayout() {
-    const layout = [];
-    for (let r = 0; r < ROWS; r++) {
-      const row = [];
-      let col = 0;
-      while (col < COLS) {
-        const remaining = COLS - col;
-        // brick width: 1 or 2 (max remaining)
-        const w = remaining === 1 ? 1 : (Math.random() < 0.55 ? 2 : 1);
-        const isHolo = Math.random() < 0.35; // 35% chance holographic
-        row.push({ col, width: w, type: isHolo ? 'holo' : 'real', colorIdx: Math.floor(Math.random() * 4) });
-        col += w;
-      }
-      layout.push(row);
-    }
-    return layout;
-  }
-
-  // Queue of bricks to drop: flattened from bottom row up, left to right
-  let dropQueue = [];
-  let currentLayout = [];
-
-  function initCycle() {
-    wall = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
-    fallingBricks = [];
-    dropQueue = [];
-    currentLayout = buildLayout();
-    wallOpacity = 1;
-    phase = 'dropping';
-    nextDropTimer = 0;
-
-    // Queue bricks row by row bottom-first, then left to right within each row
-    for (let r = ROWS - 1; r >= 0; r--) {
-      for (const brick of currentLayout[r]) {
-        dropQueue.push({ ...brick, targetRow: r });
-      }
-    }
-  }
-
-  // A falling brick: has current y position (in px, canvas coords), target row, col, etc.
-  function spawnNextBrick() {
-    if (dropQueue.length === 0) return;
-    const spec = dropQueue.shift();
-    const targetY = spec.targetRow * (BH + GAP);
-    const startY = -BH - 20 - Math.random() * 60; // start above canvas
-    const x = spec.col * (BW + GAP);
-    fallingBricks.push({
-      ...spec,
-      x,
-      y: startY,
-      targetY,
-      speed: 280 + Math.random() * 180, // px/sec
-      landed: false,
-    });
-  }
-
-  // Draw a single real LEGO brick
-  function drawRealBrick(x, y, w, colorIdx, alpha = 1) {
-    const c = REAL_COLORS[colorIdx];
-    const bw = w * (BW + GAP) - GAP;
-    ctx.save();
-    ctx.globalAlpha = alpha;
-
-    // Main body
-    ctx.fillStyle = c.fill;
-    ctx.beginPath();
-    roundRect(ctx, x, y, bw, BH, 3);
-    ctx.fill();
-
-    // Bottom shadow strip
-    ctx.fillStyle = c.shadow;
-    ctx.beginPath();
-    roundRect(ctx, x, y + BH - 5, bw, 5, [0, 0, 3, 3]);
-    ctx.fill();
-
-    // Top highlight
-    ctx.fillStyle = c.highlight;
-    ctx.globalAlpha = alpha * 0.25;
-    ctx.beginPath();
-    roundRect(ctx, x + 2, y + 2, bw - 4, 6, 2);
-    ctx.fill();
-    ctx.globalAlpha = alpha;
-
-    // Studs
-    const numStuds = w;
-    const studSpacing = bw / numStuds;
-    for (let i = 0; i < numStuds; i++) {
-      const sx = x + studSpacing * (i + 0.5);
-      const sy = y - STUD_R * 0.7;
-      // Stud cylinder
-      ctx.fillStyle = c.fill;
-      ctx.beginPath();
-      ctx.ellipse(sx, sy + STUD_R * 0.4, STUD_R, STUD_R * 0.4, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = c.fill;
-      ctx.fillRect(sx - STUD_R, sy, STUD_R * 2, STUD_R * 0.8);
-      // Stud top
-      ctx.fillStyle = c.highlight;
-      ctx.globalAlpha = alpha * 0.5;
-      ctx.beginPath();
-      ctx.ellipse(sx, sy, STUD_R, STUD_R * 0.38, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = alpha;
-    }
-
-    ctx.restore();
-  }
-
-  // Draw a holographic LEGO brick
-  function drawHoloBrick(x, y, w, alpha = 1) {
-    const bw = w * (BW + GAP) - GAP;
-    ctx.save();
-    ctx.globalAlpha = alpha;
-
-    // Glow shadow
-    ctx.shadowColor = HOLO.glow;
-    ctx.shadowBlur = 12;
-
-    // Body outline only
-    ctx.strokeStyle = '#00F5FF';
-    ctx.lineWidth = 1.5;
-    ctx.fillStyle = HOLO.fill;
-    ctx.beginPath();
-    roundRect(ctx, x, y, bw, BH, 3);
-    ctx.fill();
-    ctx.stroke();
-
-    // Inner scan line
-    ctx.globalAlpha = alpha * 0.3;
-    ctx.strokeStyle = '#00F5FF';
-    ctx.lineWidth = 0.5;
-    for (let ly = y + 6; ly < y + BH - 4; ly += 8) {
-      ctx.beginPath();
-      ctx.moveTo(x + 3, ly);
-      ctx.lineTo(x + bw - 3, ly);
-      ctx.stroke();
-    }
-    ctx.globalAlpha = alpha;
-
-    // Studs (hollow circles)
-    const numStuds = w;
-    const studSpacing = bw / numStuds;
-    ctx.shadowBlur = 8;
-    for (let i = 0; i < numStuds; i++) {
-      const sx = x + studSpacing * (i + 0.5);
-      const sy = y - STUD_R * 0.7;
-      ctx.strokeStyle = '#00F5FF';
-      ctx.lineWidth = 1.5;
-      ctx.fillStyle = 'rgba(0,245,255,0.08)';
-      ctx.beginPath();
-      ctx.ellipse(sx, sy, STUD_R, STUD_R * 0.4, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.rect(sx - STUD_R, sy, STUD_R * 2, STUD_R * 0.8);
-      ctx.stroke();
-    }
-
-    ctx.restore();
-  }
-
-  // Polyfill roundRect for older browsers
-  function roundRect(ctx, x, y, w, h, r) {
-    if (typeof r === 'number') r = [r, r, r, r];
-    const [tl, tr, br, bl] = r;
-    ctx.moveTo(x + tl, y);
-    ctx.lineTo(x + w - tr, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + tr);
-    ctx.lineTo(x + w, y + h - br);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - br, y + h);
-    ctx.lineTo(x + bl, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - bl);
-    ctx.lineTo(x, y + tl);
-    ctx.quadraticCurveTo(x, y, x + tl, y);
-    ctx.closePath();
-  }
-
-  function drawWall(opacity) {
-    for (let r = 0; r < ROWS; r++) {
-      // Scan through currentLayout for this row's bricks
-      const rowBricks = currentLayout[r];
-      for (const brick of rowBricks) {
-        // Check if this brick is landed in wall
-        const isLanded = wall[r][brick.col] !== null;
-        if (!isLanded) continue;
-        const x = brick.col * (BW + GAP);
-        const y = r * (BH + GAP);
-        if (brick.type === 'holo') {
-          drawHoloBrick(x, y, brick.width, opacity);
-        } else {
-          drawRealBrick(x, y, brick.width, brick.colorIdx, opacity);
-        }
-      }
-    }
-  }
-
-  function landBrick(brick) {
-    brick.landed = true;
-    brick.y = brick.targetY;
-    // Mark cells in wall
-    for (let c = brick.col; c < brick.col + brick.width; c++) {
-      if (brick.targetRow >= 0 && brick.targetRow < ROWS) {
-        wall[brick.targetRow][c] = { type: brick.type, colorIdx: brick.colorIdx };
-      }
-    }
-  }
-
-  function isWallComplete() {
-    for (let r = 0; r < ROWS; r++) {
-      for (let c = 0; c < COLS; c++) {
-        if (wall[r][c] === null) return false;
-      }
-    }
-    return true;
-  }
-
-  // ---- MAIN LOOP ----
-  const DROP_INTERVAL = 0.38; // seconds between spawning next brick
-  const FADEOUT_DURATION = 1.4; // seconds to fade out
-  const PAUSE_AFTER_COMPLETE = 0.6; // seconds to hold full wall
-
-  let fadeTimer = 0;
-  let pauseTimer = 0;
-
-  initCycle();
-
-  function update(dt) {
-    if (phase === 'dropping') {
-      // Advance falling bricks
-      for (const b of fallingBricks) {
-        if (b.landed) continue;
-        b.y += b.speed * dt;
-        if (b.y >= b.targetY) {
-          landBrick(b);
-          // Spawn next after a short delay
-          nextDropTimer = 0;
-        }
-      }
-      // Remove landed bricks from active list after they're settled
-      fallingBricks = fallingBricks.filter(b => !b.landed);
-
-      // Timer to spawn next
-      nextDropTimer += dt;
-      if (nextDropTimer >= DROP_INTERVAL && dropQueue.length > 0) {
-        spawnNextBrick();
-        nextDropTimer = 0;
-      }
-
-      // Check completion
-      if (isWallComplete() && fallingBricks.length === 0 && dropQueue.length === 0) {
-        phase = 'pause';
-        pauseTimer = 0;
-      }
-    }
-
-    else if (phase === 'pause') {
-      pauseTimer += dt;
-      if (pauseTimer >= PAUSE_AFTER_COMPLETE) {
-        phase = 'fadeout';
-        fadeTimer = 0;
-        wallOpacity = 1;
-      }
-    }
-
-    else if (phase === 'fadeout') {
-      fadeTimer += dt;
-      wallOpacity = Math.max(0, 1 - fadeTimer / FADEOUT_DURATION);
-      if (wallOpacity <= 0) {
-        initCycle();
-        // Spawn first brick right away
-        spawnNextBrick();
-      }
-    }
-  }
-
-  function render() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Draw settled wall bricks
-    drawWall(wallOpacity);
-
-    // Draw falling bricks
-    for (const b of fallingBricks) {
-      if (b.landed) continue;
-      const x = b.x;
-      const y = b.y;
-      if (b.type === 'holo') {
-        drawHoloBrick(x, y, b.width, 1);
-      } else {
-        drawRealBrick(x, y, b.width, b.colorIdx, 1);
-      }
-    }
-  }
-
-  // Kick off first brick
-  spawnNextBrick();
-
-  function loop(timestamp) {
-    const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
-    lastTime = timestamp;
-    update(dt);
-    render();
-    requestAnimationFrame(loop);
-  }
-  requestAnimationFrame(t => { lastTime = t; requestAnimationFrame(loop); });
-
-  // ===== SCROLL REVEAL =====
-  const reveals = document.querySelectorAll('.reveal');
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      if (e.isIntersecting) e.target.classList.add('visible');
-    });
-  }, { threshold: 0.1 });
-  reveals.forEach(el => observer.observe(el));
-
-  // Smooth nav highlight
-  const sections = document.querySelectorAll('section[id]');
-  const navLinks = document.querySelectorAll('.nav-links a');
-  window.addEventListener('scroll', () => {
-    let current = '';
-    sections.forEach(sec => {
-      if (window.scrollY >= sec.offsetTop - 100) current = sec.id;
-    });
-    navLinks.forEach(a => {
-      a.style.color = a.getAttribute('href') === '#' + current ? 'var(--holo-cyan)' : '';
-    });
-  });
-</script>
 </body>
 </html>
