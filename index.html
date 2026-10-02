@@ -170,6 +170,8 @@
             border-radius: 8px;
             text-decoration: none;
             font-weight: 600;
+            border: none;
+            cursor: pointer;
             transition: transform 0.3s, box-shadow 0.3s;
         }
 
@@ -178,7 +180,7 @@
             box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
         }
 
-        /* Grid Cards (Proyectos & Nosotros) */
+        /* Grid Cards */
         .grid-2 {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -235,7 +237,7 @@
         }
         .card-link:hover { text-decoration: underline; }
 
-        /* Legal & Cumplimiento (Importante para Flow) */
+        /* Legal & Cumplimiento */
         .legal-container {
             background: rgba(255, 255, 255, 0.02);
             border: 1px solid var(--border-color);
@@ -276,11 +278,91 @@
             font-weight: 600;
             margin-top: 20px;
             width: fit-content;
+            cursor: pointer;
             transition: 0.3s;
         }
         .btn-reclamaciones:hover {
             background: rgba(255,255,255,0.05);
             border-color: var(--text-main);
+        }
+
+        /* MODAL LIBRO DE RECLAMACIONES */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: #0f172a;
+            border: 1px solid var(--accent-cyan);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 40px;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+
+        .btn-close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .btn-close-modal:hover { color: #fff; }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
         }
 
         /* Footer */
@@ -327,10 +409,12 @@
         }
 
         @media (max-width: 768px) {
-            .nav-links { display: none; } /* En móvil se ocultaría o se haría un menú hamburguesa */
+            .nav-links { display: none; }
             .hero h1 { font-size: 2.5rem; }
             section { padding: 80px 5%; }
+            .form-row { grid-template-columns: 1fr; gap: 0; }
             .footer-bottom { flex-direction: column; gap: 10px; text-align: center; }
+            .modal-content { padding: 25px 20px; }
         }
     </style>
 </head>
@@ -423,10 +507,11 @@
             <p>IA Blocks protege tu privacidad. Las imágenes subidas a nuestras plataformas no se almacenan permanentemente en nuestros servidores ni se utilizan para entrenar modelos públicos sin consentimiento explícito.</p>
         </div>
 
-        <a href="#contacto" class="btn-reclamaciones">
+        <!-- Botón que abre el modal del Libro de Reclamaciones -->
+        <button onclick="abrirModalReclamaciones()" class="btn-reclamaciones">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>
             Libro de Reclamaciones Virtual
-        </a>
+        </button>
     </section>
 
     <!-- Contacto Section -->
@@ -467,7 +552,7 @@
                 <h5>Legal y Soporte</h5>
                 <a href="#legal">Términos y Condiciones</a>
                 <a href="#legal">Política de Reembolsos</a>
-                <a href="#legal">Libro de Reclamaciones</a>
+                <a href="javascript:void(0)" onclick="abrirModalReclamaciones()">Libro de Reclamaciones</a>
                 <a href="#contacto">Soporte Técnico</a>
             </div>
         </div>
@@ -476,6 +561,83 @@
             <p>San Borja, Lima, Perú</p>
         </div>
     </footer>
+
+    <!-- ESTRUCTURA DEL MODAL DEL LIBRO DE RECLAMACIONES -->
+    <div class="modal-overlay" id="modalReclamaciones">
+        <div class="modal-content">
+            <button class="btn-close-modal" onclick="cerrarModalReclamaciones()">×</button>
+            <h3 style="color: var(--accent-cyan); margin-bottom: 5px; font-size: 1.5rem;">Libro de Reclamaciones</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 25px;">Conforme a lo establecido en el Código de Protección y Defensa del Consumidor, esta institución cuenta con un Libro de Reclamaciones Virtual a tu disposición.</p>
+            
+            <form id="formReclamaciones" onsubmit="enviarReclamo(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombres y Apellidos completos *</label>
+                        <input type="text" class="form-control" required placeholder="Ej: Juan Pérez">
+                    </div>
+                    <div class="form-group">
+                        <label>DNI / CE *</label>
+                        <input type="text" class="form-control" required placeholder="Número de documento">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Correo Electrónico *</label>
+                        <input type="email" class="form-control" required placeholder="correo@ejemplo.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono de Contacto</label>
+                        <input type="tel" class="form-control" placeholder="Opcional">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Tipo de solicitud *</label>
+                    <select class="form-control" required>
+                        <option value="" disabled selected>Seleccione una opción</option>
+                        <option value="reclamo">Reclamo (Disconformidad con el servicio adquirido)</option>
+                        <option value="queja">Queja (Malestar respecto a la atención)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Detalle de la Queja o Reclamo *</label>
+                    <textarea class="form-control" rows="4" required placeholder="Describa el inconveniente de manera clara..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-primary" style="width: 100%;">Enviar Solicitud</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts de Control del Modal -->
+    <script>
+        function abrirModalReclamaciones() {
+            document.getElementById('modalReclamaciones').classList.add('active');
+            document.body.style.overflow = 'hidden'; // Evita que el fondo haga scroll
+        }
+
+        function cerrarModalReclamaciones() {
+            document.getElementById('modalReclamaciones').classList.remove('active');
+            document.body.style.overflow = 'auto'; // Restaura el scroll
+        }
+
+        function enviarReclamo(event) {
+            event.preventDefault(); // Evita recargar la página
+            alert("Su solicitud ha sido registrada correctamente. Un número de seguimiento ha sido enviado a su correo electrónico. Atenderemos su caso a la brevedad.");
+            document.getElementById('formReclamaciones').reset(); // Limpia el formulario
+            cerrarModalReclamaciones();
+        }
+
+        // Cerrar modal al hacer clic fuera del contenido
+        window.onclick = function(event) {
+            var modal = document.getElementById('modalReclamaciones');
+            if (event.target == modal) {
+                cerrarModalReclamaciones();
+            }
+        }
+    </script>
 
 </body>
 </html>
